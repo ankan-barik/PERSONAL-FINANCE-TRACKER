@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TransactionProvider } from "./contexts/TransactionContext";
+import { ThemeProvider } from "./hooks/useTheme";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,26 +19,28 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <TransactionProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col">
-              <Navbar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-            </div>
-          </BrowserRouter>
-        </TransactionProvider>
-      </AuthProvider>
+      <ThemeProvider defaultTheme="system">
+        <AuthProvider>
+          <TransactionProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="min-h-screen flex flex-col bg-background transition-colors duration-300">
+                <Navbar />
+                <main className="flex-1">
+                  <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+              </div>
+            </BrowserRouter>
+          </TransactionProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
