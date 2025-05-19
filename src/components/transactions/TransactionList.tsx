@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TransactionCategory, TransactionType } from '@/types';
-import { ChevronDown, SortAscending } from 'lucide-react';
+import { ChevronDown, ArrowUpDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -135,7 +135,7 @@ export default function TransactionList() {
               onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
               className="w-10 h-10"
             >
-              <SortAscending className={`h-4 w-4 transition-all ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+              <ArrowUpDown className={`h-4 w-4 transition-all ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
             </Button>
           </div>
         </div>
