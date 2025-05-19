@@ -54,11 +54,11 @@ const Register = () => {
   };
   
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
-      <div className="w-full max-w-md">
-        <Card className="shadow-lg animate-fade-in">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md p-4 animate-fade-in">
+        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Create an Account</CardTitle>
             <CardDescription className="text-center">
               Enter your information to create an account
             </CardDescription>
@@ -73,6 +73,7 @@ const Register = () => {
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -84,6 +85,7 @@ const Register = () => {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -92,8 +94,10 @@ const Register = () => {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Min. 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                   required
                 />
               </div>
@@ -102,21 +106,27 @@ const Register = () => {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  placeholder="Re-enter password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                   required
                 />
               </div>
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Creating account..." : "Register"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex justify-center border-t pt-4">
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline">
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 hover:underline font-medium">
                 Login
               </Link>
             </p>
