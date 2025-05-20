@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useTransactions, categoryIcons } from '@/contexts/TransactionContext';
+import { useTransactions, categoryColors } from '@/contexts/TransactionContext';
 import { formatDateToLocal } from '@/lib/utils';
 import { 
   Table, 
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
+import { TransactionCategory } from '@/types';
 
 export default function TransactionList() {
   const { transactions, deleteTransaction, getCategoryTotals } = useTransactions();
@@ -107,6 +108,21 @@ export default function TransactionList() {
     return totals ? totals.amount : 0;
   };
 
+  // Function to render an icon based on category
+  const getCategoryIcon = (category: TransactionCategory) => {
+    // This replaces the categoryIcons lookup with a basic representation
+    // You could add a more comprehensive icon mapping in TransactionContext if needed
+    switch(category) {
+      case 'salary':
+      case 'freelance':
+      case 'investments':
+      case 'other_income':
+        return <span className="text-green-500 w-4 h-4 flex items-center justify-center">+</span>;
+      default:
+        return <span className="text-red-500 w-4 h-4 flex items-center justify-center">-</span>;
+    }
+  };
+
   return (
     <div>
       <div className="p-4 border-b border-border/30">
@@ -191,8 +207,6 @@ export default function TransactionList() {
             </TableHeader>
             <TableBody>
               {sortedTransactions.map(transaction => {
-                const Icon = categoryIcons[transaction.category] || null;
-                
                 return (
                   <TableRow key={transaction.id} className="group hover:bg-muted/30 transition-colors animate-fade-in">
                     <TableCell className="font-medium">
@@ -201,7 +215,7 @@ export default function TransactionList() {
                     <TableCell>{transaction.description}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {Icon && <Icon className="h-4 w-4" />}
+                        {getCategoryIcon(transaction.category)}
                         <HoverCard>
                           <HoverCardTrigger className="cursor-help">
                             <span>

@@ -77,7 +77,6 @@ export default function ExpensesPieChart() {
                 dataKey="value"
                 animationBegin={0}
                 animationDuration={1800}
-                animateResize={true}
               >
                 {data.map((entry, index) => (
                   <Cell 
