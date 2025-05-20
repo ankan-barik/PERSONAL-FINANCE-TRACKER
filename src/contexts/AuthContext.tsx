@@ -12,6 +12,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+interface StoredUserCredential {
+  user: User;
+  password: string;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -36,12 +41,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
   
-  // In a real app, these would make API calls to your backend
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
       
-      // This is a mock implementation. In a real app, we'd call the backend API
+      // Demo account for testing
       if (email === 'demo@example.com' && password === 'password123') {
         const mockUser: User = {
           id: 'user-1',
@@ -49,7 +53,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: 'demo@example.com'
         };
         
-        // Mock token (in a real app, this would come from your backend)
         const mockToken = 'mock-jwt-token';
         
         localStorage.setItem('token', mockToken);
@@ -60,14 +63,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: "Success!",
           description: "You've successfully logged in.",
         });
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Please check your credentials and try again.",
-          variant: "destructive",
-        });
-        throw new Error('Invalid credentials');
+        return;
       }
+      
+      // Check for registered users in local storage
+      const registeredUsers = localStorage.getItem('registeredUsers');
+      if (registeredUsers) {
+        const users: StoredUserCredential[] = JSON.parse(registeredUsers);
+        const foundUser = users.find(u => u.user.email === email && u.password === password);
+        
+        if (foundUser) {
+          const mockToken = 'registered-jwt-token';
+          
+          localStorage.setItem('token', mockToken);
+          localStorage.setItem('user', JSON.stringify(foundUser.user));
+          
+          setUser(foundUser.user);
+          toast({
+            title: "Welcome Back!",
+            description: "You've successfully logged in to your account.",
+          });
+          return;
+        }
+      }
+      
+      // If no matching user is found
+      toast({
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+      throw new Error('Invalid credentials');
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -85,29 +111,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // This is a mock implementation. In a real app, we'd call the backend API
-      const mockUser: User = {
+      // Create a new user object
+      const newUser: User = {
         id: 'user-' + Date.now(),
         name,
         email
       };
       
-      // Mock token (in a real app, this would come from your backend)
-      const mockToken = 'mock-jwt-token';
+      // Store user credentials
+      const registeredUsers = localStorage.getItem('registeredUsers');
+      const users: StoredUserCredential[] = registeredUsers ? JSON.parse(registeredUsers) : [];
       
+      // Check if email already exists
+      if (users.some(u => u.user.email === email)) {
+        toast({
+          title: "Registration Failed",
+          description: "This email is already registered.",
+          variant: "destructive",
+        });
+        throw new Error('Email already registered');
+      }
+      
+      // Add new user to storage
+      users.push({
+        user: newUser,
+        password
+      });
+      localStorage.setItem('registeredUsers', JSON.stringify(users));
+      
+      // Mock token and login the user after registration
+      const mockToken = 'registered-jwt-token';
       localStorage.setItem('token', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      localStorage.setItem('user', JSON.stringify(newUser));
       
-      setUser(mockUser);
+      setUser(newUser);
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created.",
+        description: "Your account has been created and you're now logged in.",
       });
     } catch (error) {
       console.error('Registration error:', error);
       toast({
         title: "Registration Failed",
-        description: "Please try again later.",
+        description: error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
       throw error;
