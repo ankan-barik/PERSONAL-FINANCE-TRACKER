@@ -5,14 +5,18 @@ import MonthlyBarChart from "@/components/dashboard/MonthlyBarChart";
 import TransactionList from "@/components/transactions/TransactionList";
 import AddTransactionForm from "@/components/transactions/AddTransactionForm";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTransactions } from "@/contexts/TransactionContext";
 import { Navigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const Dashboard = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const { transactions } = useTransactions();
+  const { toast } = useToast();
   
   if (isLoading) {
     return (
@@ -28,6 +32,59 @@ const Dashboard = () => {
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
+
+  const handleExport = () => {
+    if (transactions.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "You don't have any transactions to export.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Create CSV headers
+    const headers = ['Date', 'Description', 'Category', 'Type', 'Amount'];
+    
+    // Map transaction data to CSV format
+    const csvData = transactions.map(transaction => [
+      transaction.date,
+      `"${transaction.description.replace(/"/g, '""')}"`, // Escape quotes in descriptions
+      transaction.category.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' '),
+      transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1),
+      transaction.amount.toString()
+    ]);
+    
+    // Combine headers and data
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create a Blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    // Set up download attributes
+    const date = new Date();
+    const formattedDate = date.toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `finance_export_${formattedDate}.csv`);
+    link.style.visibility = 'hidden';
+    
+    // Add to DOM, trigger click and cleanup
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Export successful",
+      description: "Your transaction data has been exported as CSV.",
+    });
+  };
   
   return (
     <div className="container mx-auto py-6 px-4 animate-fade-in">
@@ -38,7 +95,12 @@ const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-4 mt-4 sm:mt-0">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1 hover:bg-primary/10"
+            onClick={handleExport}
+          >
             <Download className="h-4 w-4" />
             <span>Export</span>
           </Button>
