@@ -50,7 +50,7 @@ const mockTransactions: Transaction[] = [
   },
   {
     id: '2',
-    amount: 500,
+    amount: 1000,
     type: 'income',
     category: 'freelance',
     description: 'Website project',
@@ -68,25 +68,25 @@ const mockTransactions: Transaction[] = [
   },
   {
     id: '4',
-    amount: 120,
+    amount: 200,
     type: 'expense',
-    category: 'groceries',
-    description: 'Weekly groceries',
+    category: 'shopping',
+    description: 'New shoes',
     date: '2023-04-06',
     userId: 'user-1'
   },
   {
     id: '5',
-    amount: 80,
+    amount: 800,
     type: 'expense',
-    category: 'utilities',
-    description: 'Electricity bill',
+    category: 'travel',
+    description: 'Travelling to New York',
     date: '2023-04-10',
     userId: 'user-1'
   },
   {
     id: '6',
-    amount: 200,
+    amount: 500,
     type: 'expense',
     category: 'dining',
     description: 'Dinner with friends',

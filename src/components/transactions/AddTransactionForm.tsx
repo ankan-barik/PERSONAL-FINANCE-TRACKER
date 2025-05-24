@@ -94,7 +94,7 @@ export default function AddTransactionForm() {
       <DialogTrigger asChild>
         <Button>Add Transaction</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Transaction</DialogTitle>
           <DialogDescription>
@@ -103,7 +103,7 @@ export default function AddTransactionForm() {
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
             <FormField
               control={form.control}
               name="type"
