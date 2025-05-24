@@ -120,7 +120,7 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">Financial Dashboard</h1>
-          <p className="text-muted-foreground">Manage your finances with ease</p>
+          <p className="text-muted-foreground">Manage your finances with ease.</p>
         </div>
 
         <div className="flex items-center gap-4 mt-4 sm:mt-0">

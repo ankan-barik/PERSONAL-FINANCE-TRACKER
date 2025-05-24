@@ -105,36 +105,6 @@ const Login = () => {
       setResetEmail("");
       setEmailValidation({ isValid: false, message: "", isChecking: false });
       
-      // Uncomment below when your backend API is ready:
-      /*
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: resetEmail,
-          resetUrl: `${window.location.origin}/reset-password`
-        }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setResetMessage(`Password reset instructions have been sent to ${resetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in ${data.expiresIn || '1 hour'}.`);
-        setResetEmail("");
-        setEmailValidation({ isValid: false, message: "", isChecking: false });
-      } else if (response.status === 404) {
-        setError("Email not found in our records");
-      } else if (response.status === 429) {
-        setError("Too many reset attempts. Please try again later");
-      } else {
-        const data = await response.json().catch(() => ({}));
-        setError(data.message || "Failed to send reset email. Please try again.");
-      }
-      */
-      
     } catch (error) {
       console.error("Password reset error:", error);
       setError("Failed to send reset email. Please try again.");
@@ -169,34 +139,34 @@ const Login = () => {
 
   const getEmailValidationColor = () => {
     if (!resetEmail || !emailValidation.message) return "";
-    return emailValidation.isValid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
+    return emailValidation.isValid ? "text-green-600" : "text-red-600";
   };
   
   if (showForgotPassword) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-800 dark:to-indigo-900">
+      <div className="flex items-center justify-center min-h-screen bg-purple-200">
         <div className="w-full max-w-md p-4 animate-fade-in">
-          <Card className="shadow-2xl border-0 bg-white dark:bg-slate-800 rounded-xl">
+          <Card className="shadow-lg border border-gray-200 bg-white rounded-xl">
             <CardHeader className="space-y-1 pb-2">
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={backToLogin}
-                  className="p-1 h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-1 h-8 w-8 hover:bg-gray-100"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">Reset Password</CardTitle>
+                <CardTitle className="text-2xl font-bold text-blue-700">Reset Password</CardTitle>
               </div>
-              <CardDescription className="text-center text-gray-500 dark:text-gray-400">
+              <CardDescription className="text-center text-gray-500">
                 Enter your email address and we'll send you instructions to reset your password
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="resetEmail">Email Address</Label>
+                  <Label htmlFor="resetEmail" className="text-black font-medium">Email Address</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
@@ -205,7 +175,7 @@ const Login = () => {
                       placeholder="name@example.com"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
-                      className={`pl-10 pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 ${
+                      className={`pl-10 pr-10 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white ${
                         resetEmail && emailValidation.message ? 
                         (emailValidation.isValid ? 'border-green-500 focus:border-green-500' : 'border-red-500 focus:border-red-500') : ''
                       }`}
@@ -223,37 +193,37 @@ const Login = () => {
                 </div>
                 
                 {error && (
-                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                    <p className="text-red-600 dark:text-red-400 text-sm font-medium">{error}</p>
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-red-600 text-sm font-medium">{error}</p>
                   </div>
                 )}
                 
                 {resetMessage && (
-                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                    <p className="text-green-600 dark:text-green-400 text-sm font-medium">{resetMessage}</p>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-green-600 text-sm font-medium">{resetMessage}</p>
                   </div>
                 )}
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 rounded-lg" 
                   disabled={isResetting || emailValidation.isChecking}
                 >
                   {isResetting ? "Sending..." : "Send Reset Email"}
                 </Button>
                 
-                <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="text-xs text-gray-500 text-center">
                   <p>Reset link will be valid for 1 hour</p>
                   <p>Check your spam folder if you don't see the email</p>
                 </div>
               </form>
             </CardContent>
             <CardFooter className="flex justify-center border-t pt-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-600">
                 Remember your password?{" "}
                 <button 
                   onClick={backToLogin}
-                  className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                  className="text-red-600 hover:text-red-600 hover:underline font-medium"
                 >
                   Back to Login
                 </button>
@@ -266,36 +236,37 @@ const Login = () => {
   }
   
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-800 dark:to-indigo-900">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-300 via-blue-200 to-indigo-400">
       <div className="w-full max-w-md p-4 animate-fade-in">
-        <Card className="shadow-2xl border-0 bg-white dark:bg-slate-800 rounded-xl">
+        <Card className="shadow-lg border border-gray-200 bg-white rounded-xl">
           <CardHeader className="space-y-1 pb-2">
-            <CardTitle className="text-2xl font-bold text-center text-blue-600 dark:text-blue-400">Welcome Back</CardTitle>
-            <CardDescription className="text-center text-gray-500 dark:text-gray-400">
+            <CardTitle className="text-2xl font-bold text-center text-blue-700">Welcome To Expensia</CardTitle>
+            <CardDescription className="text-center text-gray-500">
               Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-black font-semibold">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  className="border-gray-300 focus:border-blue-200 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white text-black"
                   required
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-black font-medium">Password</Label>
+                  
                   <button 
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                    className="text-sm text-red-600 hover:text-red-600 hover:underline font-medium"
                   >
                     Forgot password?
                   </button>
@@ -306,13 +277,13 @@ const Login = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    className="pr-10 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white text-black"
                     required
                   />
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -323,28 +294,29 @@ const Login = () => {
                 </div>
               </div>
               {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                  <p className="text-red-600 dark:text-red-400 text-sm font-medium">{error}</p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-600 text-sm font-medium">{error}</p>
                 </div>
               )}
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                className="w-full bg-blue-600 hover:bg-blue-=-oi74
+               m  0 text-white rounded-lg" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Logging in..." : "Login"}
               </Button>
               
-              <div className="text-sm text-center text-muted-foreground bg-gray-50 dark:bg-gray-700/30 p-2 rounded-md border border-gray-100 dark:border-gray-700">
-                <span className="text-muted-foreground">For testing, use: </span>
-                <span className="font-medium">demo@example.com / password123</span>
+              <div className="text-sm text-center text-gray-500 bg-gray-50 p-2 rounded-md border border-gray-100">
+                <span className="text-gray-500">For testing, use: </span>
+                <span className="font-medium text-black">demo@example.com / password123</span>
               </div>
             </form>
           </CardContent>
           <CardFooter className="flex justify-center border-t pt-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700 hover:underline font-medium">
+              <Link to="/register" className="text-red-600 hover:text-red-600 hover:underline font-medium">
                 Register
               </Link>
             </p>
