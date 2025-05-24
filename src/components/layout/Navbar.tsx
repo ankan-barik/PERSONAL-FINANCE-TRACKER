@@ -36,18 +36,18 @@ export default function Navbar() {
 
   return (
     <div className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          {/* Logo and App Name - Fixed positioning */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            <Link to="/" className="flex items-center space-x-3 no-underline">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="flex justify-between h-20 items-center min-w-0">
+          {/* Logo and App Name - Responsive sizing */}
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink min-w-0">
+            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 no-underline">
               <div className="relative group flex-shrink-0">
                 <svg
-                  width="90"
-                  height="90"
+                  width="60"
+                  height="60"
                   viewBox="0 0 150 150"
-                  className="drop-shadow-2xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-105"
-                  style={{ minWidth: '90px', minHeight: '90px' }}
+                  className="sm:w-[90px] sm:h-[90px] drop-shadow-2xl hover:drop-shadow-2xl transition-all duration-500 hover:scale-105"
+                  style={{ minWidth: '60px', minHeight: '60px' }}
                 >
                   <defs>
                     {/* Advanced Gradients */}
@@ -217,19 +217,21 @@ export default function Navbar() {
                   />
                 </svg>
               </div>
-              <div className="flex flex-col items-start justify-center flex-shrink-0">
-                <span className="text-3xl font-bold bg-gradient-to-r from-yellow-500 via-green-600 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap">
+              <div className="flex flex-col items-start justify-center flex-shrink min-w-0">
+                <span className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-500 via-green-600 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap">
                   Expensia
                 </span>
-                <span className="text-xs text-gray-500 tracking-wide whitespace-nowrap">"Simplify Spending. Amplify Success."</span>
+                <span className="text-xs text-gray-500 tracking-wide whitespace-nowrap hidden sm:block">
+                  "Simplify Spending. Amplify Success."
+                </span>
               </div>
             </Link>
           </div>
 
-          {/* Auth Section - Fixed positioning */}
-          <div className="flex items-center flex-shrink-0 ml-4">
+          {/* Auth Section - Mobile Optimized */}
+          <div className="flex items-center flex-shrink-0 ml-2">
             {isAuthenticated ? (
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative z-50" ref={dropdownRef}>
                 {/* User Profile Dropdown */}
                 <button
                   onClick={toggleDropdown}
@@ -256,9 +258,9 @@ export default function Navbar() {
                   </svg>
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu - Fixed positioning and z-index */}
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-[9999] border border-gray-200">
                     <div className="py-1">
                       {/* User Info Section (visible on mobile) */}
                       <div className="sm:hidden px-4 py-2 border-b border-gray-100">
@@ -281,26 +283,26 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
-                {/* Elegant Glass Morphism Login Icon */}
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                {/* Login Icon - Mobile Optimized - Keep same as before */}
                 <Link to="/login">
                   <div className="group relative cursor-pointer">
-                    <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-400/20 via-red-500/30 to-cyan-600/20 backdrop-blur-sm border border-white/30 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 flex items-center justify-center overflow-hidden hover:scale-105">
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400/20 via-red-500/30 to-cyan-600/20 backdrop-blur-sm border border-white/30 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex items-center justify-center overflow-hidden hover:scale-105">
                       {/* Glass morphism background layers */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent rounded-3xl"></div>
-                      <div className="absolute inset-0 bg-gradient-to-tl from-emerald-500/20 via-transparent to-cyan-400/20 rounded-3xl"></div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent rounded-2xl"></div>
+                      <div className="absolute inset-0 bg-gradient-to-tl from-emerald-500/20 via-transparent to-cyan-400/20 rounded-2xl"></div>
                       
                       {/* Floating orbs for depth */}
-                      <div className="absolute top-2 right-2 w-3 h-3 bg-gradient-to-br from-white/60 to-emerald-300/40 rounded-full blur-[1px] animate-pulse"></div>
-                      <div className="absolute bottom-3 left-3 w-2 h-2 bg-gradient-to-br from-cyan-300/50 to-white/30 rounded-full blur-[0.5px]"></div>
+                      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-br from-white/60 to-emerald-300/40 rounded-full blur-[1px] animate-pulse"></div>
+                      <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gradient-to-br from-cyan-300/50 to-white/30 rounded-full blur-[0.5px]"></div>
                       
-                      {/* Elegant Key Icon */}
+                      {/* Elegant Key Icon - Responsive sizing */}
                       <svg 
-                        width="28" 
-                        height="28" 
+                        width="18" 
+                        height="18" 
+                        className="sm:w-6 sm:h-6 relative z-10 text-red-800 drop-shadow-sm group-hover:text-red-600 transition-colors duration-300"
                         viewBox="0 0 24 24" 
-                        fill="none" 
-                        className="relative z-10 text-red-800 drop-shadow-sm group-hover:text-red-600 transition-colors duration-300"
+                        fill="none"
                       >
                         {/* Key body */}
                         <circle 
@@ -343,19 +345,19 @@ export default function Navbar() {
                     </div>
                     
                     {/* Floating ring animation */}
-                    <div className="absolute inset-0 rounded-3xl border-2 border-emerald-400/30 animate-ping opacity-20"></div>
+                    <div className="absolute inset-0 rounded-2xl border-2 border-emerald-400/30 animate-ping opacity-20"></div>
                     
-                    {/* Elegant tooltip */}
-                    <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-sm px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl backdrop-blur-sm border border-gray-700/50">
+                    {/* Elegant tooltip - Hidden on mobile */}
+                    <div className="hidden sm:block absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-sm px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl backdrop-blur-sm border border-gray-700/50">
                       <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-800"></div>
-                      <span className="font-medium">Access Account</span>
+                      <span className="font-medium">Login</span>
                     </div>
                   </div>
                 </Link>
                 
-                {/* Register Button */}
-                <Link to="/register">
-                  <button className="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-green-600 rounded-lg hover:from-green-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 whitespace-nowrap shadow-sm">
+                {/* Register Button - Text Button - Only visible on desktop */}
+                <Link to="/register" className="hidden sm:block">
+                  <button className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-green-600 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200">
                     Register
                   </button>
                 </Link>
