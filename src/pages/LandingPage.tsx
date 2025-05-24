@@ -157,9 +157,9 @@ const LandingPage = () => {
             <div className="w-full md:w-1/2 flex justify-center">
               <div className="relative w-full max-w-sm md:max-w-lg mx-auto">
                 <img 
-                  src="src\image\financial-literacy-workshop-teens-fun-3d-scene-with-financial-advisor-teaching-budgeting-s_980716-151020.avif" 
+                  src="src/image/financial-literacy-workshop-teens-fun-3d-scene-with-financial-advisor-teaching-budgeting-s_980716-151020.avif" 
                   alt="Finance Tracking" 
-                  className="w-full h-auto rounded-2xl shadow-2xl hover:shadow-blue-500/10 transition-all duration-300"
+                  className="w-full h-auto rounded-full shadow-2xl hover:shadow-blue-500/10 transition-all duration-300"
                 />
               </div>
             </div>
