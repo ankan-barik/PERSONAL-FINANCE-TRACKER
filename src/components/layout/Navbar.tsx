@@ -226,8 +226,8 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Auth Section - Fixed positioning */}
-          <div className="flex items-center flex-shrink-0 ml-4">
+          {/* Auth Section - Hidden on mobile when not authenticated */}
+          <div className="hidden sm:flex items-center flex-shrink-0 ml-4">
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 {/* User Profile Dropdown */}
@@ -241,13 +241,13 @@ export default function Navbar() {
                       {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                   </div>
-                  {/* User Name (hidden on mobile) */}
-                  <span className="hidden sm:inline text-gray-700 font-medium whitespace-nowrap">
+                  {/* User Name */}
+                  <span className="text-gray-700 font-medium whitespace-nowrap">
                     {user?.name || 'User'}
                   </span>
-                  {/* Dropdown Arrow - Hidden on mobile screens */}
+                  {/* Dropdown Arrow */}
                   <svg 
-                    className={`hidden sm:block w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -260,12 +260,6 @@ export default function Navbar() {
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                     <div className="py-1">
-                      {/* User Info Section (visible on mobile) */}
-                      <div className="sm:hidden px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-                        <p className="text-xs text-gray-500">{user?.email || 'user@example.com'}</p>
-                      </div>
-                      
                       {/* Logout Option */}
                       <button
                         onClick={handleLogout}
@@ -345,8 +339,8 @@ export default function Navbar() {
                     {/* Floating ring animation */}
                     <div className="absolute inset-0 rounded-3xl border-2 border-emerald-400/30 animate-ping opacity-20"></div>
                     
-                    {/* Elegant tooltip */}
-                    <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-sm px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl backdrop-blur-sm border border-gray-700/50">
+                    {/* Elegant tooltip - Hidden on mobile */}
+                    <div className="hidden sm:block absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-800 to-gray-900 text-white text-sm px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl backdrop-blur-sm border border-gray-700/50">
                       <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-800"></div>
                       <span className="font-medium">Access Account</span>
                     </div>
@@ -362,6 +356,41 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Mobile-only authenticated user section */}
+          {isAuthenticated && (
+            <div className="sm:hidden flex items-center flex-shrink-0 ml-4" ref={dropdownRef}>
+              <button
+                onClick={toggleDropdown}
+                className="flex items-center p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-sm ring-2 ring-green-500 ring-offset-2 ring-offset-white">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              </button>
+
+              {/* Mobile dropdown menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-1">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                      <p className="text-xs text-gray-500">{user?.email || 'user@example.com'}</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <svg className="w-4 h-4 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
