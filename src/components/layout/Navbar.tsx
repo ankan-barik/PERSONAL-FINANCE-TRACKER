@@ -198,7 +198,7 @@ export default function Navbar() {
           </div>
 
           {/* Auth Section - Fixed positioning */}
-          <div className="flex items-center flex-shrink-0 ml-4">
+          <div className="hidden md:flex items-center flex-shrink-0 ml-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700 hidden sm:inline whitespace-nowrap">
