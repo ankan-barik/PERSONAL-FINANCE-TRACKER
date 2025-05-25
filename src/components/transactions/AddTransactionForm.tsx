@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,7 +37,10 @@ const formSchema = z.object({
     (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
     { message: 'Amount must be a positive number' }
   ),
-  type: z.enum(['income', 'expense']),
+  type: z.string().min(1, 'Transaction type is required').refine(
+    (val) => val === 'income' || val === 'expense',
+    { message: 'Please select a valid transaction type' }
+  ),
   category: z.string().min(1, 'Category is required'),
   description: z.string().min(1, 'Description is required'),
   date: z.string().min(1, 'Date is required')
@@ -60,7 +62,7 @@ export default function AddTransactionForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: '',
-      type: 'expense',
+   
       category: '',
       description: '',
       date: new Date().toISOString().split('T')[0]
@@ -72,7 +74,7 @@ export default function AddTransactionForm() {
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     addTransaction({
       amount: parseFloat(values.amount),
-      type: values.type,
+      type: values.type as 'income' | 'expense',
       category: values.category as TransactionCategory,
       description: values.description,
       date: values.date
@@ -116,7 +118,7 @@ export default function AddTransactionForm() {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder="Select transaction type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

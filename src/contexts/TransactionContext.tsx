@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Transaction, TransactionCategory, TransactionType, CategoryColor, MonthlyData } from '@/types';
 import { useAuth } from './AuthContext';
@@ -37,73 +36,6 @@ export const categoryColors: CategoryColor = {
   other_expense: '#9E9E9E'
 };
 
-// Mock data
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    amount: 3000,
-    type: 'income',
-    category: 'salary',
-    description: 'Monthly Salary',
-    date: '2023-04-01',
-    userId: 'user-1'
-  },
-  {
-    id: '2',
-    amount: 1000,
-    type: 'income',
-    category: 'freelance',
-    description: 'Website project',
-    date: '2023-04-05',
-    userId: 'user-1'
-  },
-  {
-    id: '3',
-    amount: 800,
-    type: 'expense',
-    category: 'rent',
-    description: 'Monthly rent',
-    date: '2023-04-02',
-    userId: 'user-1'
-  },
-  {
-    id: '4',
-    amount: 200,
-    type: 'expense',
-    category: 'shopping',
-    description: 'New shoes',
-    date: '2023-04-06',
-    userId: 'user-1'
-  },
-  {
-    id: '5',
-    amount: 800,
-    type: 'expense',
-    category: 'travel',
-    description: 'Travelling to New York',
-    date: '2023-04-10',
-    userId: 'user-1'
-  },
-  {
-    id: '6',
-    amount: 500,
-    type: 'expense',
-    category: 'dining',
-    description: 'Dinner with friends',
-    date: '2023-04-15',
-    userId: 'user-1'
-  },
-  {
-    id: '7',
-    amount: 150,
-    type: 'expense',
-    category: 'transportation',
-    description: 'Gas refill',
-    date: '2023-04-08',
-    userId: 'user-1'
-  }
-];
-
 export const TransactionProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -113,20 +45,38 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
   // Load transactions when user changes
   useEffect(() => {
     if (user) {
-      // In a real app, we would fetch from API
-      setTransactions(mockTransactions);
+      // Load transactions from localStorage for this user
+      const savedTransactions = localStorage.getItem(`transactions_${user.id}`);
+      if (savedTransactions) {
+        try {
+          const parsedTransactions = JSON.parse(savedTransactions);
+          setTransactions(parsedTransactions);
+        } catch (error) {
+          console.error('Error parsing saved transactions:', error);
+          setTransactions([]);
+        }
+      } else {
+        setTransactions([]);
+      }
     } else {
       setTransactions([]);
     }
     setIsLoading(false);
   }, [user]);
   
+  // Save transactions to localStorage whenever they change
+  useEffect(() => {
+    if (user && transactions.length >= 0) {
+      localStorage.setItem(`transactions_${user.id}`, JSON.stringify(transactions));
+    }
+  }, [transactions, user]);
+  
   const addTransaction = (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) return;
     
     const newTransaction: Transaction = {
       ...transaction,
-      id: `trans-${Date.now()}`,
+      id: `trans-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       userId: user.id
     };
     
