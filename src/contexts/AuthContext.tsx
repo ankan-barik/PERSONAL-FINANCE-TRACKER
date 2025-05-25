@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,26 +15,9 @@ interface AuthContextType {
 interface StoredUserCredential {
   user: User;
   password: string;
-  // Store normalized values for consistent comparison
-  normalizedEmail: string;
-  normalizedPassword: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Centralized normalization function - EXACTLY the same logic everywhere
-const normalizeCredentials = (email: string, password: string) => {
-  // Email: remove ALL whitespace (including tabs, newlines) and convert to lowercase
-  const normalizedEmail = email.replace(/\s+/g, '').trim().toLowerCase();
-  
-  // Password: only trim leading/trailing whitespace, preserve internal spaces
-  const normalizedPassword = password.trim();
-  
-  return {
-    normalizedEmail,
-    normalizedPassword
-  };
-};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -61,18 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Normalize inputs using centralized function
-      const { normalizedEmail, normalizedPassword } = normalizeCredentials(email, password);
-      
-      console.log('Login attempt:', {
-        originalEmail: email,
-        normalizedEmail,
-        originalPassword: password,
-        normalizedPasswordLength: normalizedPassword.length
-      });
-      
       // Demo account for testing
-      if (normalizedEmail === 'demo@example.com' && normalizedPassword === 'password123') {
+      if (email === 'demo@example.com' && password === 'password123') {
         const mockUser: User = {
           id: 'user-1',
           name: 'Demo User',
@@ -96,27 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const registeredUsers = localStorage.getItem('registeredUsers');
       if (registeredUsers) {
         const users: StoredUserCredential[] = JSON.parse(registeredUsers);
-        
-        console.log('Searching through registered users:', users.map(u => ({
-          storedEmail: u.normalizedEmail,
-          storedPasswordLength: u.normalizedPassword?.length || 'undefined'
-        })));
-        
-        // First try to find by normalized credentials
-        let foundUser = users.find(u => 
-          u.normalizedEmail === normalizedEmail && 
-          u.normalizedPassword === normalizedPassword
-        );
-        
-        // Fallback: try to find by original email format for backward compatibility
-        if (!foundUser) {
-          foundUser = users.find(u => {
-            const { normalizedEmail: userNormEmail, normalizedPassword: userNormPassword } = 
-              normalizeCredentials(u.user.email, u.password);
-            
-            return userNormEmail === normalizedEmail && userNormPassword === normalizedPassword;
-          });
-        }
+        const foundUser = users.find(u => u.user.email === email && u.password === password);
         
         if (foundUser) {
           const mockToken = 'registered-jwt-token';
@@ -134,7 +88,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // If no matching user is found
-      console.log('No matching user found');
       toast({
         title: "Login Failed",
         description: "Please check your credentials and try again.",
@@ -158,32 +111,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Normalize inputs using centralized function
-      const { normalizedEmail, normalizedPassword } = normalizeCredentials(email, password);
-      const normalizedName = name.trim();
-      
-      console.log('Registration attempt:', {
-        originalName: name,
-        normalizedName,
-        originalEmail: email,
-        normalizedEmail,
-        originalPassword: password,
-        normalizedPasswordLength: normalizedPassword.length
-      });
-      
-      // Create a new user object with original display values
+      // Create a new user object
       const newUser: User = {
         id: 'user-' + Date.now(),
-        name: normalizedName,
-        email: normalizedEmail // Store normalized email for consistency
+        name,
+        email
       };
       
       // Store user credentials
       const registeredUsers = localStorage.getItem('registeredUsers');
       const users: StoredUserCredential[] = registeredUsers ? JSON.parse(registeredUsers) : [];
       
-      // Check if email already exists (using normalized comparison)
-      if (users.some(u => u.normalizedEmail === normalizedEmail)) {
+      // Check if email already exists
+      if (users.some(u => u.user.email === email)) {
         toast({
           title: "Registration Failed",
           description: "This email is already registered.",
@@ -192,18 +132,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Email already registered');
       }
       
-      // Add new user to storage with both original and normalized values
-      const newUserCredential: StoredUserCredential = {
+      // Add new user to storage
+      users.push({
         user: newUser,
-        password: password, // Keep original for backward compatibility
-        normalizedEmail,
-        normalizedPassword
-      };
-      
-      users.push(newUserCredential);
+        password
+      });
       localStorage.setItem('registeredUsers', JSON.stringify(users));
-      
-      console.log('User registered successfully, stored data:', newUserCredential);
       
       // Mock token and login the user after registration
       const mockToken = 'registered-jwt-token';
@@ -263,3 +197,4 @@ export const useAuth = () => {
   
   return context;
 };
+

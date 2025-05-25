@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, CheckCircle, XCircle, User, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -16,91 +16,22 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState({
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    special: false,
-    match: false
-  });
-  const [emailValidation, setEmailValidation] = useState({
-    isValid: false,
-    message: "",
-    isChecking: false
-  });
-
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Email validation effect
-  useEffect(() => {
-    if (!email) {
-      setEmailValidation({ isValid: false, message: "", isChecking: false });
-      return;
-    }
-
-    const normalizedEmail = email.replace(/\s+/g, '').trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (emailRegex.test(normalizedEmail)) {
-      setEmailValidation({
-        isValid: true,
-        message: "Email format is valid",
-        isChecking: false
-      });
-    } else {
-      setEmailValidation({
-        isValid: false,
-        message: "Please enter a valid email format",
-        isChecking: false
-      });
-    }
-  }, [email]);
-
-  // Password validation effect
-  useEffect(() => {
-    const trimmedPassword = password.trim();
-    
-    setPasswordValidation({
-      length: trimmedPassword.length >= 6,
-      uppercase: /[A-Z]/.test(trimmedPassword),
-      lowercase: /[a-z]/.test(trimmedPassword),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(trimmedPassword),
-      match: trimmedPassword === confirmPassword.trim() && trimmedPassword.length > 0
-    });
-  }, [password, confirmPassword]);
-
-  // Input handlers - store raw values exactly as user types
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  };
-
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfirmPassword(e.target.value);
-  };
-
+  
+  // If already logged in, redirect to dashboard
+  if (isAuthenticated) {
+    navigate("/dashboard");
+    return null;
+  }
+  
   // Password validation function
-  const validatePassword = (password: string) => {
+  const validatePassword = (password) => {
     const minLength = 6;
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
+    
     if (password.length < minLength) {
       return "Password must be at least 6 characters long";
     }
@@ -113,283 +44,181 @@ const Register = () => {
     if (!hasSpecialChar) {
       return "Password must contain at least one special character";
     }
-    return null;
+    
+    return null; // Password is valid
   };
-
-  const handleRegister = async (e: React.FormEvent) => {
+  
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
-
-    // Basic validation with trimmed values
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    const trimmedConfirmPassword = confirmPassword.trim();
-
-    if (!trimmedName || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
+    
+    if (!name || !email || !password || !confirmPassword) {
       setError("Please fill in all fields");
       return;
     }
-
-    // Name validation
-    if (trimmedName.length < 2) {
-      setError("Name must be at least 2 characters long");
-      return;
-    }
-
-    // Basic email validation
-    const normalizedEmail = trimmedEmail.replace(/\s+/g, '').toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
+    
     // Validate password strength
-    const passwordError = validatePassword(trimmedPassword);
+    const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
       return;
     }
-
-    if (trimmedPassword !== trimmedConfirmPassword) {
+    
+    if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-
+    
     try {
       setIsSubmitting(true);
-      
-      // Pass raw values to register - normalization happens in AuthContext
       await register(name, email, password);
       navigate("/dashboard");
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      if (error.message === 'Email already registered') {
-        setError("This email is already registered. Please use a different email or try logging in.");
-      } else {
-        setError("Registration failed. Please try again.");
-      }
+    } catch (error) {
+      setError("Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const getValidationIcon = (isValid: boolean) => {
-    return isValid ? 
-      <CheckCircle className="h-4 w-4 text-green-500" /> : 
-      <XCircle className="h-4 w-4 text-red-500" />;
-  };
-
-  const getEmailValidationIcon = () => {
-    if (emailValidation.isChecking) {
-      return <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />;
-    }
-    if (email && emailValidation.message) {
-      return emailValidation.isValid ? 
-        <CheckCircle className="h-4 w-4 text-green-500" /> : 
-        <XCircle className="h-4 w-4 text-red-500" />;
-    }
-    return null;
-  };
-
-  const isFormValid = () => {
-    return name.trim().length >= 2 &&
-           emailValidation.isValid &&
-           passwordValidation.length &&
-           passwordValidation.uppercase &&
-           passwordValidation.lowercase &&
-           passwordValidation.special &&
-           passwordValidation.match;
-  };
-
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
-          <CardDescription className="text-center">
-            Enter your details to create your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-300 via-blue-200 to-indigo-400">
+      <div className="w-full max-w-md p-4 animate-fade-in">
+        <Card className="shadow-xl border border-gray-200/60 bg-white backdrop-blur-sm rounded-2xl">
+          <CardHeader className="space-y-1 pb-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">
+              Create Account
+            </CardTitle>
+            <CardDescription className="text-center text-gray-600 text-base">
+              Join us today and start your journey with Expensia.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-gray-900 font-medium">Full Name</Label>
                 <Input
                   id="name"
                   type="text"
-                  autoCapitalize="words"
-                  autoCorrect="off"
-                  autoComplete="name"
-                  value={name}
-                  onChange={handleNameChange}
                   placeholder="Enter your full name"
-                  className="pl-10 text-base"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="border-gray-200 bg-gray-50/50 text-black focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl h-12"
                   required
                 />
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-900 font-medium">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="email"
-                  inputMode="email"
-                  value={email}
-                  onChange={handleEmailChange}
                   placeholder="Enter your email"
-                  className="pl-10 pr-10 text-base"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-gray-200 bg-gray-50/50 text-black focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl h-12"
                   required
                 />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  {getEmailValidationIcon()}
-                </div>
-              </div>
-              {emailValidation.message && (
-                <p className={`text-sm ${emailValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                  {emailValidation.message}
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Create a password"
-                  className="text-base pr-10"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
               </div>
               
-              {password && (
-                <div className="text-xs space-y-1 bg-gray-50 p-3 rounded-md">
-                  <p className="font-medium text-gray-700">Password Requirements:</p>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      {getValidationIcon(passwordValidation.length)}
-                      <span className={passwordValidation.length ? 'text-green-600' : 'text-red-600'}>
-                        At least 6 characters
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getValidationIcon(passwordValidation.uppercase)}
-                      <span className={passwordValidation.uppercase ? 'text-green-600' : 'text-red-600'}>
-                        One uppercase letter
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getValidationIcon(passwordValidation.lowercase)}
-                      <span className={passwordValidation.lowercase ? 'text-green-600' : 'text-red-600'}>
-                        One lowercase letter
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getValidationIcon(passwordValidation.special)}
-                      <span className={passwordValidation.special ? 'text-green-600' : 'text-red-600'}>
-                        One special character
-                      </span>
-                    </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-900 font-medium">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="border-gray-200 bg-gray-50/50 text-black focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl h-12 pr-12"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                  <strong>Password requirements:</strong> 1 uppercase, 1 lowercase, 1 special character, minimum 6 characters
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-gray-900 font-medium">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="border-gray-200 bg-gray-50/50 text-black focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl h-12 pr-12"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium">
+                  {error}
+                </div>
+              )}
+              
+              <Button 
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 h-12"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Creating account...</span>
                   </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={handleConfirmPasswordChange}
-                  placeholder="Confirm your password"
-                  className="text-base pr-10"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              
-              {confirmPassword && (
-                <div className="flex items-center space-x-2 text-xs">
-                  {getValidationIcon(passwordValidation.match)}
-                  <span className={passwordValidation.match ? 'text-green-600' : 'text-red-600'}>
-                    Passwords {passwordValidation.match ? 'match' : 'do not match'}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {error && (
-              <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
-                {error}
-              </div>
-            )}
-            
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isSubmitting || !isFormValid()}
-            >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+          
+          <CardFooter className="flex justify-center border-t border-gray-100 pt-6">
+            <p className="text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link 
+                to="/login" 
+                className="text-red-600 hover:text-red-700 font-semibold hover:underline transition-colors"
+              >
+                Sign in here
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };

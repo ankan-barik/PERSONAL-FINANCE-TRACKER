@@ -17,123 +17,94 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetMessage, setResetMessage] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-  const [emailValidation, setEmailValidation] = useState({
-    isValid: false,
-    message: "",
-    isChecking: false
-  });
-
+  const [emailValidation, setEmailValidation] = useState({ isValid: false, message: "", isChecking: false });
+  
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
-  // Simple email format validation for reset
+  
+  // Simple email format validation (no backend calls)
   useEffect(() => {
     if (!resetEmail || !showForgotPassword) {
       setEmailValidation({ isValid: false, message: "", isChecking: false });
       return;
     }
 
-    const normalizedEmail = resetEmail.replace(/\s+/g, '').trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (emailRegex.test(normalizedEmail)) {
-      setEmailValidation({
-        isValid: true,
-        message: "Email format is valid",
-        isChecking: false
+    if (emailRegex.test(resetEmail)) {
+      setEmailValidation({ 
+        isValid: true, 
+        message: "Email format is valid", 
+        isChecking: false 
       });
     } else {
-      setEmailValidation({
-        isValid: false,
-        message: "Please enter a valid email format",
-        isChecking: false
+      setEmailValidation({ 
+        isValid: false, 
+        message: "Please enter a valid email format", 
+        isChecking: false 
       });
     }
   }, [resetEmail, showForgotPassword]);
-
+  
   // If already logged in, redirect to dashboard
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Input handlers - store raw values exactly as user types
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  };
-
-  const handleResetEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setResetEmail(e.target.value);
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
+  if (isAuthenticated) {
+    navigate("/dashboard");
+    return null;
+  }
+  
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!email.trim() || !password.trim()) {
+    
+    if (!email || !password) {
       setError("Please fill in all fields");
       return;
     }
-
-    // Basic email validation before attempting login
-    const normalizedEmailForValidation = email.replace(/\s+/g, '').trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmailForValidation)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    if (password.trim().length < 6) {
-      setError("Password must be at least 6 characters long");
-      return;
-    }
-
+    
     try {
       setIsSubmitting(true);
       
-      // Pass raw values to login - normalization happens in AuthContext
+      // This will call your actual login API
       await login(email, password);
+      
+      // Navigate to dashboard on successful login
       navigate("/dashboard");
-    } catch (error: any) {
+      
+    } catch (error) {
       console.error("Login error:", error);
-      setError("Invalid credentials. Please check your email and password and try again.");
+      setError(error.message || "Invalid credentials");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
     setError("");
     setResetMessage("");
-
-    const normalizedResetEmail = resetEmail.replace(/\s+/g, '').trim().toLowerCase();
-
-    if (!normalizedResetEmail) {
+    
+    if (!resetEmail) {
       setError("Please enter your email address");
       return;
     }
 
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedResetEmail)) {
+    if (!emailRegex.test(resetEmail)) {
       setError("Please enter a valid email format");
       return;
     }
-
+    
     try {
       setIsResetting(true);
-      // Simulate successful password reset for demo
-      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setResetMessage(`Password reset instructions have been sent to ${normalizedResetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
+      // Simulate successful password reset for demo
+      // Replace this with your actual API call when backend is ready
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+      
+      setResetMessage(`Password reset instructions have been sent to ${resetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
       setResetEmail("");
       setEmailValidation({ isValid: false, message: "", isChecking: false });
+      
     } catch (error) {
       console.error("Password reset error:", error);
       setError("Failed to send reset email. Please try again.");
@@ -166,179 +137,192 @@ const Login = () => {
     return null;
   };
 
+  const getEmailValidationColor = () => {
+    if (!resetEmail || !emailValidation.message) return "";
+    return emailValidation.isValid ? "text-green-600" : "text-red-600";
+  };
+  
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={backToLogin}
-                className="p-1 h-8 w-8"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
-            </div>
-            <CardDescription>
-              Enter your email address and we'll send you a link to reset your password.
+      <div className="flex items-center justify-center min-h-screen bg-purple-200">
+        <div className="w-full max-w-md p-4 animate-fade-in">
+          <Card className="shadow-lg border border-gray-200 bg-white rounded-xl">
+            <CardHeader className="space-y-1 pb-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={backToLogin}
+                  className="p-1 h-8 w-8 hover:bg-gray-100"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <CardTitle className="text-2xl font-bold text-blue-700">Reset Password</CardTitle>
+              </div>
+              <CardDescription className="text-center text-gray-500">
+                Enter your email address and we'll send you instructions to reset your password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="resetEmail" className="text-black font-medium">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="resetEmail"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className={`pl-10 pr-10 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white ${
+                        resetEmail && emailValidation.message ? 
+                        (emailValidation.isValid ? 'border-green-500 focus:border-green-500' : 'border-red-500 focus:border-red-500') : ''
+                      }`}
+                      required
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {getEmailValidationIcon()}
+                    </div>
+                  </div>
+                  {resetEmail && emailValidation.message && (
+                    <p className={`text-xs ${getEmailValidationColor()}`}>
+                      {emailValidation.message}
+                    </p>
+                  )}
+                </div>
+                
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-red-600 text-sm font-medium">{error}</p>
+                  </div>
+                )}
+                
+                {resetMessage && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-green-600 text-sm font-medium">{resetMessage}</p>
+                  </div>
+                )}
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 rounded-lg" 
+                  disabled={isResetting || emailValidation.isChecking}
+                >
+                  {isResetting ? "Sending..." : "Send Reset Email"}
+                </Button>
+                
+                <div className="text-xs text-gray-500 text-center">
+                  <p>Reset link will be valid for 1 hour</p>
+                  <p>Check your spam folder if you don't see the email</p>
+                </div>
+              </form>
+            </CardContent>
+            <CardFooter className="flex justify-center border-t pt-4">
+              <p className="text-sm text-gray-600">
+                Remember your password?{" "}
+                <button 
+                  onClick={backToLogin}
+                  className="text-red-600 hover:text-red-600 hover:underline font-medium"
+                >
+                  Back to Login
+                </button>
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-300 via-blue-200 to-indigo-400">
+      <div className="w-full max-w-md p-4 animate-fade-in">
+        <Card className="shadow-lg border border-gray-200 bg-white rounded-xl">
+          <CardHeader className="space-y-1 pb-2">
+            <CardTitle className="text-2xl font-bold text-center text-blue-700">Welcome To Expensia</CardTitle>
+            <CardDescription className="text-center text-gray-500">
+              Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleForgotPassword} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="resetEmail">Email Address</Label>
+                <Label htmlFor="email" className="text-black font-semibold">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-gray-300 focus:border-blue-200 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white text-black"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-black font-medium">Password</Label>
+                  
+                  <button 
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-red-600 hover:text-red-600 hover:underline font-medium"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    id="resetEmail"
-                    type="email"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    autoComplete="email"
-                    value={resetEmail}
-                    onChange={handleResetEmailChange}
-                    placeholder="Enter your email"
-                    className="pl-10 pr-10 text-base"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pr-10 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white text-black"
                     required
                   />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {getEmailValidationIcon()}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-                {emailValidation.message && (
-                  <p className={`text-sm ${emailValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                    {emailValidation.message}
-                  </p>
-                )}
               </div>
               {error && (
-                <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
-                  {error}
-                </div>
-              )}
-              {resetMessage && (
-                <div className="text-green-600 text-sm text-center p-3 bg-green-50 rounded-md border border-green-200">
-                  {resetMessage}
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-600 text-sm font-medium">{error}</p>
                 </div>
               )}
               <Button 
                 type="submit" 
-                className="w-full" 
-                disabled={isResetting || !emailValidation.isValid}
+                className="w-full bg-blue-600 hover:bg-blue-=-oi74
+               m  0 text-white rounded-lg" 
+                disabled={isSubmitting}
               >
-                {isResetting ? "Sending..." : "Send Reset Link"}
+                {isSubmitting ? "Logging in..." : "Login"}
               </Button>
+              
+              <div className="text-sm text-center text-gray-500 bg-gray-50 p-2 rounded-md border border-gray-100">
+                <span className="text-gray-500">For testing, use: </span>
+                <span className="font-medium text-black">demo@example.com / password123</span>
+              </div>
             </form>
           </CardContent>
-          <CardFooter className="text-center">
+          <CardFooter className="flex justify-center border-t pt-4">
             <p className="text-sm text-gray-600">
-              Remember your password?{" "}
-              <button 
-                onClick={backToLogin}
-                className="text-blue-600 hover:underline"
-              >
-                Back to login
-              </button>
+              Don't have an account?{" "}
+              <Link to="/register" className="text-red-600 hover:text-red-600 hover:underline font-medium">
+                Register
+              </Link>
             </p>
           </CardFooter>
         </Card>
       </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoCapitalize="none"
-                autoCorrect="off"
-                autoComplete="email"
-                inputMode="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Enter your email"
-                className="text-base"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Enter your password"
-                  className="text-base"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={togglePasswordVisibility}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowForgotPassword(true)}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-            {error && (
-              <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
-                {error}
-              </div>
-            )}
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
-              Register
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
     </div>
   );
 };
