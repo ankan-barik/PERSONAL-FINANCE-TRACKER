@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate(); // Add this line
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -15,6 +16,7 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     setIsDropdownOpen(false);
+    navigate('/'); // This will redirect to your landing page (root route)
   };
 
   // Close dropdown when clicking outside
@@ -284,7 +286,7 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-2 sm:space-x-3">
-                {/* Login Icon - Mobile Optimized - Keep same as before */}
+                {/* Login Icon - Mobile Optimized */}
                 <Link to="/login">
                   <div className="group relative cursor-pointer">
                     <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400/20 via-red-500/30 to-cyan-600/20 backdrop-blur-sm border border-white/30 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 flex items-center justify-center overflow-hidden hover:scale-105">
