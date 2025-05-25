@@ -7,6 +7,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Mail, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 
+// Utility function for consistent input normalization
+const normalizeInput = (value: string, type: 'email' | 'password' | 'text') => {
+  if (!value) return '';
+  
+  switch (type) {
+    case 'email':
+      // Remove all whitespace and convert to lowercase
+      return value.replace(/\s+/g, '').toLowerCase();
+    case 'password':
+      // Only trim leading/trailing whitespace, preserve internal spaces
+      return value.trim();
+    case 'text':
+      // Trim whitespace
+      return value.trim();
+    default:
+      return value.trim();
+  }
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,8 +52,10 @@ const Login = () => {
       return;
     }
 
+    const normalizedEmail = normalizeInput(resetEmail, 'email');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(resetEmail)) {
+    
+    if (emailRegex.test(normalizedEmail)) {
       setEmailValidation({
         isValid: true,
         message: "Email format is valid",
@@ -56,62 +77,65 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Input handlers with consistent cleaning
+  // Input handlers with consistent normalization
   const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setEmail(value.trim().toLowerCase());
+    const rawValue = e.target.value;
+    // Store raw value for display, normalize on submission
+    setEmail(rawValue);
   };
 
   const handlePasswordChange = (e) => {
-    const value = e.target.value;
-    setPassword(value.trim());
+    const rawValue = e.target.value;
+    // Store raw value for display, normalize on submission
+    setPassword(rawValue);
   };
 
   const handleResetEmailChange = (e) => {
-    const value = e.target.value;
-    setResetEmail(value.trim().toLowerCase());
+    const rawValue = e.target.value;
+    setResetEmail(rawValue);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Clean inputs before validation
-    const cleanedEmail = email.trim().toLowerCase();
-    const cleanedPassword = password.trim();
+    // Normalize inputs consistently
+    const normalizedEmail = normalizeInput(email, 'email');
+    const normalizedPassword = normalizeInput(password, 'password');
 
-    if (!cleanedEmail || !cleanedPassword) {
+    console.log('Login Debug:', {
+      rawEmail: email,
+      normalizedEmail,
+      rawPassword: password,
+      normalizedPasswordLength: normalizedPassword.length
+    });
+
+    if (!normalizedEmail || !normalizedPassword) {
       setError("Please fill in all fields");
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanedEmail)) {
+    if (!emailRegex.test(normalizedEmail)) {
       setError("Please enter a valid email address");
       return;
     }
 
-    if (cleanedPassword.length < 6) {
+    if (normalizedPassword.length < 6) {
       setError("Password must be at least 6 characters long");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      // Log for debugging (remove in production)
-      console.log("Login attempt:", { 
-        email: cleanedEmail, 
-        passwordLength: cleanedPassword.length 
-      });
       
-      // Use cleaned values for login
-      await login(cleanedEmail, cleanedPassword);
-      // Navigate to dashboard on successful login
+      // Use normalized values for login
+      await login(normalizedEmail, normalizedPassword);
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.message || "Invalid credentials. Please check your email and password.");
+      setError(error.message || "Invalid credentials. Please check your email and password and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -122,16 +146,16 @@ const Login = () => {
     setError("");
     setResetMessage("");
 
-    const cleanedResetEmail = resetEmail.trim().toLowerCase();
+    const normalizedResetEmail = normalizeInput(resetEmail, 'email');
 
-    if (!cleanedResetEmail) {
+    if (!normalizedResetEmail) {
       setError("Please enter your email address");
       return;
     }
 
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanedResetEmail)) {
+    if (!emailRegex.test(normalizedResetEmail)) {
       setError("Please enter a valid email format");
       return;
     }
@@ -139,10 +163,9 @@ const Login = () => {
     try {
       setIsResetting(true);
       // Simulate successful password reset for demo
-      // Replace this with your actual API call when backend is ready
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setResetMessage(`Password reset instructions have been sent to ${cleanedResetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
+      setResetMessage(`Password reset instructions have been sent to ${normalizedResetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
       setResetEmail("");
       setEmailValidation({ isValid: false, message: "", isChecking: false });
     } catch (error) {
@@ -226,7 +249,9 @@ const Login = () => {
                 )}
               </div>
               {error && (
-                <div className="text-red-500 text-sm text-center">{error}</div>
+                <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
+                  {error}
+                </div>
               )}
               {resetMessage && (
                 <div className="text-green-600 text-sm text-center p-3 bg-green-50 rounded-md border border-green-200">
@@ -277,11 +302,16 @@ const Login = () => {
                 autoCapitalize="none"
                 autoCorrect="off"
                 autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="Enter your email"
+                className="text-base" // Prevents zoom on iOS
                 required
               />
+              <p className="text-xs text-gray-500">
+                Normalized: {normalizeInput(email, 'email')}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -295,6 +325,7 @@ const Login = () => {
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="Enter your password"
+                  className="text-base" // Prevents zoom on iOS
                   required
                 />
                 <Button
@@ -323,7 +354,9 @@ const Login = () => {
               </button>
             </div>
             {error && (
-              <div className="text-red-500 text-sm text-center">{error}</div>
+              <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
+                {error}
+              </div>
             )}
             <Button 
               type="submit" 

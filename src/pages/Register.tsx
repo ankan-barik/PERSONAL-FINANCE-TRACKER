@@ -7,6 +7,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 
+// SAME utility function as in Login component
+const normalizeInput = (value: string, type: 'email' | 'password' | 'text') => {
+  if (!value) return '';
+  
+  switch (type) {
+    case 'email':
+      // Remove all whitespace and convert to lowercase
+      return value.replace(/\s+/g, '').toLowerCase();
+    case 'password':
+      // Only trim leading/trailing whitespace, preserve internal spaces
+      return value.trim();
+    case 'text':
+      // Trim whitespace
+      return value.trim();
+    default:
+      return value.trim();
+  }
+};
+
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,27 +45,25 @@ const Register = () => {
     return null;
   }
 
-  // Input handlers with normalization (SAME AS LOGIN)
+  // Input handlers - store raw values, normalize on submission
   const handleNameChange = (e) => {
-    const value = e.target.value;
-    setName(value.trim());
+    const rawValue = e.target.value;
+    setName(rawValue);
   };
 
   const handleEmailChange = (e) => {
-    const value = e.target.value;
-    // Apply SAME normalization as Login component
-    setEmail(value.trim().toLowerCase());
+    const rawValue = e.target.value;
+    setEmail(rawValue);
   };
 
   const handlePasswordChange = (e) => {
-    const value = e.target.value;
-    // Apply SAME normalization as Login component
-    setPassword(value.trim());
+    const rawValue = e.target.value;
+    setPassword(rawValue);
   };
 
   const handleConfirmPasswordChange = (e) => {
-    const value = e.target.value;
-    setConfirmPassword(value.trim());
+    const rawValue = e.target.value;
+    setConfirmPassword(rawValue);
   };
 
   // Password validation function
@@ -75,51 +92,54 @@ const Register = () => {
     e.preventDefault();
     setError("");
 
-    // Clean inputs SAME AS LOGIN
-    const cleanedName = name.trim();
-    const cleanedEmail = email.trim().toLowerCase();
-    const cleanedPassword = password.trim();
-    const cleanedConfirmPassword = confirmPassword.trim();
+    // Normalize inputs using SAME function as Login
+    const normalizedName = normalizeInput(name, 'text');
+    const normalizedEmail = normalizeInput(email, 'email');
+    const normalizedPassword = normalizeInput(password, 'password');
+    const normalizedConfirmPassword = normalizeInput(confirmPassword, 'password');
 
-    if (!cleanedName || !cleanedEmail || !cleanedPassword || !cleanedConfirmPassword) {
+    console.log('Registration Debug:', {
+      rawName: name,
+      normalizedName,
+      rawEmail: email,
+      normalizedEmail,
+      rawPassword: password,
+      normalizedPasswordLength: normalizedPassword.length
+    });
+
+    if (!normalizedName || !normalizedEmail || !normalizedPassword || !normalizedConfirmPassword) {
       setError("Please fill in all fields");
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanedEmail)) {
+    if (!emailRegex.test(normalizedEmail)) {
       setError("Please enter a valid email address");
       return;
     }
 
     // Validate password strength
-    const passwordError = validatePassword(cleanedPassword);
+    const passwordError = validatePassword(normalizedPassword);
     if (passwordError) {
       setError(passwordError);
       return;
     }
 
-    if (cleanedPassword !== cleanedConfirmPassword) {
+    if (normalizedPassword !== normalizedConfirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      // Log for debugging
-      console.log("Registration attempt:", { 
-        name: cleanedName,
-        email: cleanedEmail, 
-        passwordLength: cleanedPassword.length 
-      });
       
-      // Use CLEANED values for registration
-      await register(cleanedName, cleanedEmail, cleanedPassword);
+      // Use SAME normalized values as Login would use
+      await register(normalizedName, normalizedEmail, normalizedPassword);
       navigate("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
-      setError("Registration failed. Please try again.");
+      setError("Registration failed. This email may already be in use. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -147,6 +167,7 @@ const Register = () => {
                 value={name}
                 onChange={handleNameChange}
                 placeholder="Enter your full name"
+                className="text-base" // Prevents zoom on iOS
                 required
               />
             </div>
@@ -158,11 +179,16 @@ const Register = () => {
                 autoCapitalize="none"
                 autoCorrect="off"
                 autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="Enter your email"
+                className="text-base" // Prevents zoom on iOS
                 required
               />
+              <p className="text-xs text-gray-500">
+                Normalized: {normalizeInput(email, 'email')}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -176,6 +202,7 @@ const Register = () => {
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="Create a password"
+                  className="text-base" // Prevents zoom on iOS
                   required
                 />
                 <Button
@@ -193,6 +220,15 @@ const Register = () => {
                   )}
                 </Button>
               </div>
+              <div className="text-xs text-gray-600 space-y-1">
+                <p>Password must contain:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>At least 6 characters</li>
+                  <li>One uppercase letter</li>
+                  <li>One lowercase letter</li>
+                  <li>One special character</li>
+                </ul>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -206,6 +242,7 @@ const Register = () => {
                   value={confirmPassword}
                   onChange={handleConfirmPasswordChange}
                   placeholder="Confirm your password"
+                  className="text-base" // Prevents zoom on iOS
                   required
                 />
                 <Button
@@ -225,7 +262,9 @@ const Register = () => {
               </div>
             </div>
             {error && (
-              <div className="text-red-500 text-sm text-center">{error}</div>
+              <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
+                {error}
+              </div>
             )}
             <Button 
               type="submit" 
