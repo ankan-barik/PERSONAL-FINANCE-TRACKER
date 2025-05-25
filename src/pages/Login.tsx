@@ -300,8 +300,7 @@ const Login = () => {
               )}
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-=-oi74
-               m  0 text-white rounded-lg" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Logging in..." : "Login"}
