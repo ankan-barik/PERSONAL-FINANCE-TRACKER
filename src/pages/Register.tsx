@@ -26,7 +26,7 @@ const Register = () => {
     return null;
   }
 
-  // Input handlers with consistent normalization (same as Login)
+  // Input handlers with normalization (SAME AS LOGIN)
   const handleNameChange = (e) => {
     const value = e.target.value;
     setName(value.trim());
@@ -34,13 +34,13 @@ const Register = () => {
 
   const handleEmailChange = (e) => {
     const value = e.target.value;
-    // Apply same normalization as Login component
+    // Apply SAME normalization as Login component
     setEmail(value.trim().toLowerCase());
   };
 
   const handlePasswordChange = (e) => {
     const value = e.target.value;
-    // Apply same normalization as Login component
+    // Apply SAME normalization as Login component
     setPassword(value.trim());
   };
 
@@ -68,14 +68,14 @@ const Register = () => {
     if (!hasSpecialChar) {
       return "Password must contain at least one special character";
     }
-    return null; // Password is valid
+    return null;
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Clean inputs before validation (same as Login)
+    // Clean inputs SAME AS LOGIN
     const cleanedName = name.trim();
     const cleanedEmail = email.trim().toLowerCase();
     const cleanedPassword = password.trim();
@@ -107,14 +107,14 @@ const Register = () => {
 
     try {
       setIsSubmitting(true);
-      // Log for debugging (remove in production)
+      // Log for debugging
       console.log("Registration attempt:", { 
         name: cleanedName,
         email: cleanedEmail, 
         passwordLength: cleanedPassword.length 
       });
       
-      // Use cleaned values for registration
+      // Use CLEANED values for registration
       await register(cleanedName, cleanedEmail, cleanedPassword);
       navigate("/dashboard");
     } catch (error) {
