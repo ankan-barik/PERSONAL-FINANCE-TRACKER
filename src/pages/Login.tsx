@@ -46,32 +46,69 @@ const Login = () => {
   }, [resetEmail, showForgotPassword]);
   
   // If already logged in, redirect to dashboard
-  if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
+  
+  // Clean and normalize input values
+  const cleanInput = (value) => {
+    return value.trim().toLowerCase();
+  };
+  
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    // Remove any extra whitespace and convert to lowercase for consistency
+    setEmail(value.trim().toLowerCase());
+  };
+  
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    // Keep password as-is but trim whitespace
+    setPassword(value.trim());
+  };
   
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     
-    if (!email || !password) {
+    // Clean inputs before validation
+    const cleanedEmail = email.trim().toLowerCase();
+    const cleanedPassword = password.trim();
+    
+    if (!cleanedEmail || !cleanedPassword) {
       setError("Please fill in all fields");
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanedEmail)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    
+    if (cleanedPassword.length < 6) {
+      setError("Password must be at least 6 characters long");
       return;
     }
     
     try {
       setIsSubmitting(true);
       
-      // This will call your actual login API
-      await login(email, password);
+      // Log for debugging (remove in production)
+      console.log("Login attempt:", { email: cleanedEmail, passwordLength: cleanedPassword.length });
+      
+      // Use cleaned values for login
+      await login(cleanedEmail, cleanedPassword);
       
       // Navigate to dashboard on successful login
       navigate("/dashboard");
       
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.message || "Invalid credentials");
+      setError(error.message || "Invalid credentials. Please check your email and password.");
     } finally {
       setIsSubmitting(false);
     }
@@ -82,14 +119,16 @@ const Login = () => {
     setError("");
     setResetMessage("");
     
-    if (!resetEmail) {
+    const cleanedResetEmail = resetEmail.trim().toLowerCase();
+    
+    if (!cleanedResetEmail) {
       setError("Please enter your email address");
       return;
     }
 
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(resetEmail)) {
+    if (!emailRegex.test(cleanedResetEmail)) {
       setError("Please enter a valid email format");
       return;
     }
@@ -101,7 +140,7 @@ const Login = () => {
       // Replace this with your actual API call when backend is ready
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
       
-      setResetMessage(`Password reset instructions have been sent to ${resetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
+      setResetMessage(`Password reset instructions have been sent to ${cleanedResetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
       setResetEmail("");
       setEmailValidation({ isValid: false, message: "", isChecking: false });
       
@@ -142,6 +181,11 @@ const Login = () => {
     return emailValidation.isValid ? "text-green-600" : "text-red-600";
   };
   
+  // Don't render if already authenticated
+  if (isAuthenticated) {
+    return null;
+  }
+  
   if (showForgotPassword) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-purple-200">
@@ -174,11 +218,15 @@ const Login = () => {
                       type="email"
                       placeholder="name@example.com"
                       value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
+                      onChange={(e) => setResetEmail(e.target.value.trim().toLowerCase())}
                       className={`pl-10 pr-10 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white ${
                         resetEmail && emailValidation.message ? 
                         (emailValidation.isValid ? 'border-green-500 focus:border-green-500' : 'border-red-500 focus:border-red-500') : ''
                       }`}
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
                       required
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -206,7 +254,7 @@ const Login = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 rounded-lg" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 rounded-lg touch-manipulation" 
                   disabled={isResetting || emailValidation.isChecking}
                 >
                   {isResetting ? "Sending..." : "Send Reset Email"}
@@ -223,7 +271,7 @@ const Login = () => {
                 Remember your password?{" "}
                 <button 
                   onClick={backToLogin}
-                  className="text-red-600 hover:text-red-600 hover:underline font-medium"
+                  className="text-red-600 hover:text-red-600 hover:underline font-medium touch-manipulation"
                 >
                   Back to Login
                 </button>
@@ -246,7 +294,7 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-black font-semibold">Email</Label>
                 <Input
@@ -254,8 +302,13 @@ const Login = () => {
                   type="email"
                   placeholder="name@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   className="border-gray-300 focus:border-blue-200 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white text-black"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  inputMode="email"
                   required
                 />
               </div>
@@ -266,7 +319,7 @@ const Login = () => {
                   <button 
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-red-600 hover:text-red-600 hover:underline font-medium"
+                    className="text-sm text-red-600 hover:text-red-600 hover:underline font-medium touch-manipulation"
                   >
                     Forgot password?
                   </button>
@@ -276,14 +329,19 @@ const Login = () => {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     className="pr-10 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white text-black"
+                    autoComplete="current-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
                     required
                   />
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
+                    tabIndex={-1}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -300,7 +358,7 @@ const Login = () => {
               )}
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg touch-manipulation min-h-[44px]" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Logging in..." : "Login"}
@@ -315,7 +373,7 @@ const Login = () => {
           <CardFooter className="flex justify-center border-t pt-4">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link to="/register" className="text-red-600 hover:text-red-600 hover:underline font-medium">
+              <Link to="/register" className="text-red-600 hover:text-red-600 hover:underline font-medium touch-manipulation">
                 Register
               </Link>
             </p>
