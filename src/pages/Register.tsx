@@ -26,25 +26,27 @@ const Register = () => {
     return null;
   }
 
-  // Clean and normalize input values (same as Login component)
+  // Input handlers with consistent normalization (same as Login)
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    setName(value.trim());
+  };
+
   const handleEmailChange = (e) => {
     const value = e.target.value;
+    // Apply same normalization as Login component
     setEmail(value.trim().toLowerCase());
   };
 
   const handlePasswordChange = (e) => {
     const value = e.target.value;
+    // Apply same normalization as Login component
     setPassword(value.trim());
   };
 
   const handleConfirmPasswordChange = (e) => {
     const value = e.target.value;
     setConfirmPassword(value.trim());
-  };
-
-  const handleNameChange = (e) => {
-    const value = e.target.value;
-    setName(value.trim());
   };
 
   // Password validation function
@@ -73,7 +75,7 @@ const Register = () => {
     e.preventDefault();
     setError("");
 
-    // Clean inputs before validation
+    // Clean inputs before validation (same as Login)
     const cleanedName = name.trim();
     const cleanedEmail = email.trim().toLowerCase();
     const cleanedPassword = password.trim();
@@ -105,10 +107,18 @@ const Register = () => {
 
     try {
       setIsSubmitting(true);
+      // Log for debugging (remove in production)
+      console.log("Registration attempt:", { 
+        name: cleanedName,
+        email: cleanedEmail, 
+        passwordLength: cleanedPassword.length 
+      });
+      
       // Use cleaned values for registration
       await register(cleanedName, cleanedEmail, cleanedPassword);
       navigate("/dashboard");
     } catch (error) {
+      console.error("Registration error:", error);
       setError("Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
