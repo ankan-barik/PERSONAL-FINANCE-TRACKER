@@ -183,7 +183,7 @@ const LandingPage = () => {
               🎯 Powerful Features
             </span>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-              Everything You Need to
+              Everything You Need To
               <span className="text-gradient block text-purple-700">Master Your Money</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
