@@ -1,30 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
-
-// SAME utility function as in Login component
-const normalizeInput = (value: string, type: 'email' | 'password' | 'text') => {
-  if (!value) return '';
-  
-  switch (type) {
-    case 'email':
-      // Remove all whitespace and convert to lowercase
-      return value.replace(/\s+/g, '').toLowerCase();
-    case 'password':
-      // Only trim leading/trailing whitespace, preserve internal spaces
-      return value.trim();
-    case 'text':
-      // Trim whitespace
-      return value.trim();
-    default:
-      return value.trim();
-  }
-};
+import { Eye, EyeOff, CheckCircle, XCircle, User, Mail } from "lucide-react";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -35,39 +16,86 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    special: false,
+    match: false
+  });
+  const [emailValidation, setEmailValidation] = useState({
+    isValid: false,
+    message: "",
+    isChecking: false
+  });
 
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // If already logged in, redirect to dashboard
-  if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
-  }
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
-  // Input handlers - store raw values, normalize on submission
-  const handleNameChange = (e) => {
-    const rawValue = e.target.value;
-    setName(rawValue);
+  // Email validation effect
+  useEffect(() => {
+    if (!email) {
+      setEmailValidation({ isValid: false, message: "", isChecking: false });
+      return;
+    }
+
+    const normalizedEmail = email.replace(/\s+/g, '').trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (emailRegex.test(normalizedEmail)) {
+      setEmailValidation({
+        isValid: true,
+        message: "Email format is valid",
+        isChecking: false
+      });
+    } else {
+      setEmailValidation({
+        isValid: false,
+        message: "Please enter a valid email format",
+        isChecking: false
+      });
+    }
+  }, [email]);
+
+  // Password validation effect
+  useEffect(() => {
+    const trimmedPassword = password.trim();
+    
+    setPasswordValidation({
+      length: trimmedPassword.length >= 6,
+      uppercase: /[A-Z]/.test(trimmedPassword),
+      lowercase: /[a-z]/.test(trimmedPassword),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(trimmedPassword),
+      match: trimmedPassword === confirmPassword.trim() && trimmedPassword.length > 0
+    });
+  }, [password, confirmPassword]);
+
+  // Input handlers - store raw values exactly as user types
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
   };
 
-  const handleEmailChange = (e) => {
-    const rawValue = e.target.value;
-    setEmail(rawValue);
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
   };
 
-  const handlePasswordChange = (e) => {
-    const rawValue = e.target.value;
-    setPassword(rawValue);
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
   };
 
-  const handleConfirmPasswordChange = (e) => {
-    const rawValue = e.target.value;
-    setConfirmPassword(rawValue);
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
   };
 
   // Password validation function
-  const validatePassword = (password) => {
+  const validatePassword = (password: string) => {
     const minLength = 6;
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
@@ -88,31 +116,29 @@ const Register = () => {
     return null;
   };
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Normalize inputs using SAME function as Login
-    const normalizedName = normalizeInput(name, 'text');
-    const normalizedEmail = normalizeInput(email, 'email');
-    const normalizedPassword = normalizeInput(password, 'password');
-    const normalizedConfirmPassword = normalizeInput(confirmPassword, 'password');
+    // Basic validation with trimmed values
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
 
-    console.log('Registration Debug:', {
-      rawName: name,
-      normalizedName,
-      rawEmail: email,
-      normalizedEmail,
-      rawPassword: password,
-      normalizedPasswordLength: normalizedPassword.length
-    });
-
-    if (!normalizedName || !normalizedEmail || !normalizedPassword || !normalizedConfirmPassword) {
+    if (!trimmedName || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
       setError("Please fill in all fields");
       return;
     }
 
+    // Name validation
+    if (trimmedName.length < 2) {
+      setError("Name must be at least 2 characters long");
+      return;
+    }
+
     // Basic email validation
+    const normalizedEmail = trimmedEmail.replace(/\s+/g, '').toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
       setError("Please enter a valid email address");
@@ -120,13 +146,13 @@ const Register = () => {
     }
 
     // Validate password strength
-    const passwordError = validatePassword(normalizedPassword);
+    const passwordError = validatePassword(trimmedPassword);
     if (passwordError) {
       setError(passwordError);
       return;
     }
 
-    if (normalizedPassword !== normalizedConfirmPassword) {
+    if (trimmedPassword !== trimmedConfirmPassword) {
       setError("Passwords do not match");
       return;
     }
@@ -134,15 +160,47 @@ const Register = () => {
     try {
       setIsSubmitting(true);
       
-      // Use SAME normalized values as Login would use
-      await register(normalizedName, normalizedEmail, normalizedPassword);
+      // Pass raw values to register - normalization happens in AuthContext
+      await register(name, email, password);
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      setError("Registration failed. This email may already be in use. Please try again.");
+      if (error.message === 'Email already registered') {
+        setError("This email is already registered. Please use a different email or try logging in.");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getValidationIcon = (isValid: boolean) => {
+    return isValid ? 
+      <CheckCircle className="h-4 w-4 text-green-500" /> : 
+      <XCircle className="h-4 w-4 text-red-500" />;
+  };
+
+  const getEmailValidationIcon = () => {
+    if (emailValidation.isChecking) {
+      return <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />;
+    }
+    if (email && emailValidation.message) {
+      return emailValidation.isValid ? 
+        <CheckCircle className="h-4 w-4 text-green-500" /> : 
+        <XCircle className="h-4 w-4 text-red-500" />;
+    }
+    return null;
+  };
+
+  const isFormValid = () => {
+    return name.trim().length >= 2 &&
+           emailValidation.isValid &&
+           passwordValidation.length &&
+           passwordValidation.uppercase &&
+           passwordValidation.lowercase &&
+           passwordValidation.special &&
+           passwordValidation.match;
   };
 
   return (
@@ -158,38 +216,51 @@ const Register = () => {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                autoCapitalize="words"
-                autoCorrect="off"
-                autoComplete="name"
-                value={name}
-                onChange={handleNameChange}
-                placeholder="Enter your full name"
-                className="text-base" // Prevents zoom on iOS
-                required
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="name"
+                  type="text"
+                  autoCapitalize="words"
+                  autoCorrect="off"
+                  autoComplete="name"
+                  value={name}
+                  onChange={handleNameChange}
+                  placeholder="Enter your full name"
+                  className="pl-10 text-base"
+                  required
+                />
+              </div>
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoCapitalize="none"
-                autoCorrect="off"
-                autoComplete="email"
-                inputMode="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Enter your email"
-                className="text-base" // Prevents zoom on iOS
-                required
-              />
-              <p className="text-xs text-gray-500">
-                Normalized: {normalizeInput(email, 'email')}
-              </p>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="email"
+                  type="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="email"
+                  inputMode="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  placeholder="Enter your email"
+                  className="pl-10 pr-10 text-base"
+                  required
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {getEmailValidationIcon()}
+                </div>
+              </div>
+              {emailValidation.message && (
+                <p className={`text-sm ${emailValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                  {emailValidation.message}
+                </p>
+              )}
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -202,7 +273,7 @@ const Register = () => {
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="Create a password"
-                  className="text-base" // Prevents zoom on iOS
+                  className="text-base pr-10"
                   required
                 />
                 <Button
@@ -220,16 +291,40 @@ const Register = () => {
                   )}
                 </Button>
               </div>
-              <div className="text-xs text-gray-600 space-y-1">
-                <p>Password must contain:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>At least 6 characters</li>
-                  <li>One uppercase letter</li>
-                  <li>One lowercase letter</li>
-                  <li>One special character</li>
-                </ul>
-              </div>
+              
+              {password && (
+                <div className="text-xs space-y-1 bg-gray-50 p-3 rounded-md">
+                  <p className="font-medium text-gray-700">Password Requirements:</p>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      {getValidationIcon(passwordValidation.length)}
+                      <span className={passwordValidation.length ? 'text-green-600' : 'text-red-600'}>
+                        At least 6 characters
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getValidationIcon(passwordValidation.uppercase)}
+                      <span className={passwordValidation.uppercase ? 'text-green-600' : 'text-red-600'}>
+                        One uppercase letter
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getValidationIcon(passwordValidation.lowercase)}
+                      <span className={passwordValidation.lowercase ? 'text-green-600' : 'text-red-600'}>
+                        One lowercase letter
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getValidationIcon(passwordValidation.special)}
+                      <span className={passwordValidation.special ? 'text-green-600' : 'text-red-600'}>
+                        One special character
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
@@ -242,7 +337,7 @@ const Register = () => {
                   value={confirmPassword}
                   onChange={handleConfirmPasswordChange}
                   placeholder="Confirm your password"
-                  className="text-base" // Prevents zoom on iOS
+                  className="text-base pr-10"
                   required
                 />
                 <Button
@@ -260,16 +355,27 @@ const Register = () => {
                   )}
                 </Button>
               </div>
+              
+              {confirmPassword && (
+                <div className="flex items-center space-x-2 text-xs">
+                  {getValidationIcon(passwordValidation.match)}
+                  <span className={passwordValidation.match ? 'text-green-600' : 'text-red-600'}>
+                    Passwords {passwordValidation.match ? 'match' : 'do not match'}
+                  </span>
+                </div>
+              )}
             </div>
+            
             {error && (
               <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md border border-red-200">
                 {error}
               </div>
             )}
+            
             <Button 
               type="submit" 
-              className="w-full" 
-              disabled={isSubmitting}
+              className="w-full"
+              disabled={isSubmitting || !isFormValid()}
             >
               {isSubmitting ? "Creating Account..." : "Create Account"}
             </Button>
@@ -279,7 +385,7 @@ const Register = () => {
           <p className="text-sm text-gray-600">
             Already have an account?{" "}
             <Link to="/login" className="text-blue-600 hover:underline">
-              Sign in here
+              Sign in
             </Link>
           </p>
         </CardFooter>

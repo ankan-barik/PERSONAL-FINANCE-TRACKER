@@ -7,25 +7,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Mail, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 
-// Utility function for consistent input normalization
-const normalizeInput = (value: string, type: 'email' | 'password' | 'text') => {
-  if (!value) return '';
-  
-  switch (type) {
-    case 'email':
-      // Remove all whitespace and convert to lowercase
-      return value.replace(/\s+/g, '').toLowerCase();
-    case 'password':
-      // Only trim leading/trailing whitespace, preserve internal spaces
-      return value.trim();
-    case 'text':
-      // Trim whitespace
-      return value.trim();
-    default:
-      return value.trim();
-  }
-};
-
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,14 +26,14 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Simple email format validation (no backend calls)
+  // Simple email format validation for reset
   useEffect(() => {
     if (!resetEmail || !showForgotPassword) {
       setEmailValidation({ isValid: false, message: "", isChecking: false });
       return;
     }
 
-    const normalizedEmail = normalizeInput(resetEmail, 'email');
+    const normalizedEmail = resetEmail.replace(/\s+/g, '').trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
     if (emailRegex.test(normalizedEmail)) {
@@ -77,52 +58,37 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Input handlers with consistent normalization
-  const handleEmailChange = (e) => {
-    const rawValue = e.target.value;
-    // Store raw value for display, normalize on submission
-    setEmail(rawValue);
+  // Input handlers - store raw values exactly as user types
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
   };
 
-  const handlePasswordChange = (e) => {
-    const rawValue = e.target.value;
-    // Store raw value for display, normalize on submission
-    setPassword(rawValue);
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
   };
 
-  const handleResetEmailChange = (e) => {
-    const rawValue = e.target.value;
-    setResetEmail(rawValue);
+  const handleResetEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setResetEmail(e.target.value);
   };
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Normalize inputs consistently
-    const normalizedEmail = normalizeInput(email, 'email');
-    const normalizedPassword = normalizeInput(password, 'password');
-
-    console.log('Login Debug:', {
-      rawEmail: email,
-      normalizedEmail,
-      rawPassword: password,
-      normalizedPasswordLength: normalizedPassword.length
-    });
-
-    if (!normalizedEmail || !normalizedPassword) {
+    if (!email.trim() || !password.trim()) {
       setError("Please fill in all fields");
       return;
     }
 
-    // Basic email validation
+    // Basic email validation before attempting login
+    const normalizedEmailForValidation = email.replace(/\s+/g, '').trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
+    if (!emailRegex.test(normalizedEmailForValidation)) {
       setError("Please enter a valid email address");
       return;
     }
 
-    if (normalizedPassword.length < 6) {
+    if (password.trim().length < 6) {
       setError("Password must be at least 6 characters long");
       return;
     }
@@ -130,23 +96,23 @@ const Login = () => {
     try {
       setIsSubmitting(true);
       
-      // Use normalized values for login
-      await login(normalizedEmail, normalizedPassword);
+      // Pass raw values to login - normalization happens in AuthContext
+      await login(email, password);
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      setError(error.message || "Invalid credentials. Please check your email and password and try again.");
+      setError("Invalid credentials. Please check your email and password and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleForgotPassword = async (e) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setResetMessage("");
 
-    const normalizedResetEmail = normalizeInput(resetEmail, 'email');
+    const normalizedResetEmail = resetEmail.replace(/\s+/g, '').trim().toLowerCase();
 
     if (!normalizedResetEmail) {
       setError("Please enter your email address");
@@ -235,7 +201,7 @@ const Login = () => {
                     value={resetEmail}
                     onChange={handleResetEmailChange}
                     placeholder="Enter your email"
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 text-base"
                     required
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -306,12 +272,9 @@ const Login = () => {
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="Enter your email"
-                className="text-base" // Prevents zoom on iOS
+                className="text-base"
                 required
               />
-              <p className="text-xs text-gray-500">
-                Normalized: {normalizeInput(email, 'email')}
-              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -325,7 +288,7 @@ const Login = () => {
                   value={password}
                   onChange={handlePasswordChange}
                   placeholder="Enter your password"
-                  className="text-base" // Prevents zoom on iOS
+                  className="text-base"
                   required
                 />
                 <Button
