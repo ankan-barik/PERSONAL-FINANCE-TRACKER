@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,12 +8,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  forgotPassword: (email: string) => Promise<{ message: string }>;
   isAuthenticated: boolean;
-}
-
-interface StoredUserCredential {
-  user: User;
-  password: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,145 +18,171 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  
-  // Check if user is already logged in
+
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const userData = localStorage.getItem('user');
     
-    if (token && storedUser) {
+    if (token && userData) {
       try {
-        setUser(JSON.parse(storedUser));
+        setUser(JSON.parse(userData));
       } catch (error) {
         console.error('Failed to parse user data:', error);
         logout();
       }
     }
-    
     setIsLoading(false);
   }, []);
-  
-  const login = async (email: string, password: string) => {
+
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      
-      // Demo account for testing
-      if (email === 'demo@example.com' && password === 'password123') {
-        const mockUser: User = {
-          id: 'user-1',
-          name: 'Demo User',
-          email: 'demo@example.com'
-        };
-        
-        const mockToken = 'mock-jwt-token';
-        
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        
-        setUser(mockUser);
-        toast({
-          title: "Success!",
-          description: "You've successfully logged in.",
-        });
-        return;
-      }
-      
-      // Check for registered users in local storage
-      const registeredUsers = localStorage.getItem('registeredUsers');
-      if (registeredUsers) {
-        const users: StoredUserCredential[] = JSON.parse(registeredUsers);
-        const foundUser = users.find(u => u.user.email === email && u.password === password);
-        
-        if (foundUser) {
-          const mockToken = 'registered-jwt-token';
-          
-          localStorage.setItem('token', mockToken);
-          localStorage.setItem('user', JSON.stringify(foundUser.user));
-          
-          setUser(foundUser.user);
-          toast({
-            title: "Welcome Back!",
-            description: "You've successfully logged in to your account.",
-          });
-          return;
-        }
-      }
-      
-      // If no matching user is found
-      toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
+      console.log('🔄 Attempting login...');
+
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      throw new Error('Invalid credentials');
+
+      console.log('📡 Login response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Login response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.user);
+      
+      toast({
+        title: "Welcome Back!",
+        description: "You've successfully logged in to your account.",
+      });
+
     } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      console.error('❌ Login error:', error);
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        toast({
+          title: "Connection Error",
+          description: "Cannot connect to server. Please ensure backend is running on port 5000.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login Failed",
+          description: error instanceof Error ? error.message : "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const register = async (name: string, email: string, password: string) => {
+
+  const register = async (name: string, email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      
-      // Create a new user object
-      const newUser: User = {
-        id: 'user-' + Date.now(),
-        name,
-        email
-      };
-      
-      // Store user credentials
-      const registeredUsers = localStorage.getItem('registeredUsers');
-      const users: StoredUserCredential[] = registeredUsers ? JSON.parse(registeredUsers) : [];
-      
-      // Check if email already exists
-      if (users.some(u => u.user.email === email)) {
-        toast({
-          title: "Registration Failed",
-          description: "This email is already registered.",
-          variant: "destructive",
-        });
-        throw new Error('Email already registered');
+      console.log('🔄 Attempting registration...');
+      console.log('📝 Registration data:', { name, email, passwordLength: password.length });
+
+      // Test backend connectivity first
+      try {
+        const healthResponse = await fetch('http://localhost:5000/api/health');
+        console.log('🏥 Backend health check:', healthResponse.status);
+      } catch (healthError) {
+        console.error('❌ Backend health check failed:', healthError);
+        throw new Error('Cannot connect to server. Please ensure backend is running.');
       }
-      
-      // Add new user to storage
-      users.push({
-        user: newUser,
-        password
+
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
       });
-      localStorage.setItem('registeredUsers', JSON.stringify(users));
+
+      console.log('📡 Registration response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Registration response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.user);
       
-      // Mock token and login the user after registration
-      const mockToken = 'registered-jwt-token';
-      localStorage.setItem('token', mockToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      
-      setUser(newUser);
       toast({
         title: "Registration Successful!",
         description: "Your account has been created and you're now logged in.",
       });
+
     } catch (error) {
-      console.error('Registration error:', error);
-      toast({
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "Please try again later.",
-        variant: "destructive",
-      });
+      console.error('❌ Registration error:', error);
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        toast({
+          title: "Connection Error",
+          description: "Cannot connect to server. Please ensure backend is running on port 5000.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: error instanceof Error ? error.message : "Please try again later.",
+          variant: "destructive",
+        });
+      }
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  const forgotPassword = async (email: string): Promise<{ message: string }> => {
+    try {
+      console.log('🔄 Attempting password reset for:', email);
+
+      const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Password reset failed');
+      }
+
+      toast({
+        title: "Reset Email Sent",
+        description: "Please check your email for password reset instructions.",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('❌ Password reset error:', error);
+      toast({
+        title: "Reset Failed",
+        description: error instanceof Error ? error.message : "Please try again later.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -171,18 +192,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       description: "You've been successfully logged out.",
     });
   };
-  
+
+  const value = {
+    user,
+    isLoading,
+    login,
+    register,
+    logout,
+    forgotPassword,
+    isAuthenticated: !!user
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -197,4 +219,3 @@ export const useAuth = () => {
   
   return context;
 };
-

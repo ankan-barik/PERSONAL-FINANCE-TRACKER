@@ -19,7 +19,7 @@ const Login = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [emailValidation, setEmailValidation] = useState({ isValid: false, message: "", isChecking: false });
   
-  const { login, isAuthenticated } = useAuth();
+  const { login, forgotPassword, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Simple email format validation (no backend calls)
@@ -46,12 +46,13 @@ const Login = () => {
   }, [resetEmail, showForgotPassword]);
   
   // If already logged in, redirect to dashboard
-  if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
   
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
@@ -59,25 +60,32 @@ const Login = () => {
       setError("Please fill in all fields");
       return;
     }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email format");
+      return;
+    }
     
     try {
       setIsSubmitting(true);
       
-      // This will call your actual login API
+      // This will call your backend login API through AuthContext
       await login(email, password);
       
-      // Navigate to dashboard on successful login
-      navigate("/dashboard");
+      // Navigate to dashboard on successful login - handled by useEffect above
+      // The AuthContext will show success toast automatically
       
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.message || "Invalid credentials");
+      setError(error instanceof Error ? error.message : "Login failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleForgotPassword = async (e) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setResetMessage("");
@@ -87,7 +95,6 @@ const Login = () => {
       return;
     }
 
-    // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(resetEmail)) {
       setError("Please enter a valid email format");
@@ -97,17 +104,15 @@ const Login = () => {
     try {
       setIsResetting(true);
       
-      // Simulate successful password reset for demo
-      // Replace this with your actual API call when backend is ready
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-      
-      setResetMessage(`Password reset instructions have been sent to ${resetEmail}. Please check your inbox and follow the instructions to reset your password. The link will expire in 1 hour.`);
+      // Call the backend forgot password API through AuthContext
+      const response = await forgotPassword(resetEmail);
+      setResetMessage(response.message);
       setResetEmail("");
       setEmailValidation({ isValid: false, message: "", isChecking: false });
       
     } catch (error) {
       console.error("Password reset error:", error);
-      setError("Failed to send reset email. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to send reset email. Please try again.");
     } finally {
       setIsResetting(false);
     }
@@ -207,7 +212,7 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 rounded-lg" 
-                  disabled={isResetting || emailValidation.isChecking}
+                  disabled={isResetting || emailValidation.isChecking || !emailValidation.isValid}
                 >
                   {isResetting ? "Sending..." : "Send Reset Email"}
                 </Button>
@@ -300,16 +305,14 @@ const Login = () => {
               )}
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-=-oi74
-               m  0 text-white rounded-lg" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Logging in..." : "Login"}
               </Button>
               
               <div className="text-sm text-center text-gray-500 bg-gray-50 p-2 rounded-md border border-gray-100">
-                <span className="text-gray-500">For testing, use: </span>
-                <span className="font-medium text-black">demo@example.com / password123</span>
+                <span className="text-gray-500">Create an account to get started</span>
               </div>
             </form>
           </CardContent>
