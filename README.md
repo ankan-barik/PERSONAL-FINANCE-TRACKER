@@ -103,7 +103,7 @@ Use `.env` for environment variables.
 
 ---
 
-## 📌 Bonus Features (Optional)
+## 📌 Bonus Features 
 
 * Export transactions as PDF
 * Monthly email reports with Nodemailer
